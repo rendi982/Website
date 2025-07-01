@@ -1,0 +1,107 @@
+
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>OSINT Tracker Lengkap</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #121212; color: #eee; padding: 20px; }
+    h1 { color: #00ffd5; }
+    input, button { padding: 10px; margin: 5px; width: 300px; }
+    .card { background: #1f1f1f; padding: 15px; border-radius: 10px; margin-top: 15px; box-shadow: 0 0 10px #00ffd5; }
+    .card h3 { margin-top: 0; color: #00ffbf; }
+    pre { white-space: pre-wrap; color: #0f0; background: #111; padding: 10px; border-radius: 5px; }
+    a { color: #0ff; }
+  </style>
+</head>
+<body>
+  <h1>🔍 OSINT Tracker: NIK, No HP, IP</h1>
+
+  <input type="text" id="inputValue" placeholder="Masukkan NIK / No HP / IP..." />
+  <br>
+  <button onclick="processInput()">Lacak Sekarang</button>
+
+  <div id="results"></div>
+
+  <script>
+    let wilayah = {};
+
+    async function loadWilayah() {
+      const res = await fetch('wilayah.json');
+      wilayah = await res.json();
+    }
+
+    function getZodiak(day, month) {
+      const zodiakList = [
+        ["Capricorn", 1, 1], ["Aquarius", 1, 20], ["Pisces", 2, 19], ["Aries", 3, 21],
+        ["Taurus", 4, 20], ["Gemini", 5, 21], ["Cancer", 6, 21], ["Leo", 7, 23],
+        ["Virgo", 8, 23], ["Libra", 9, 23], ["Scorpio", 10, 23], ["Sagittarius", 11, 22], ["Capricorn", 12, 22]
+      ];
+      return zodiakList.find((z, i) => {
+        const next = zodiakList[i + 1] || zodiakList[0];
+        return (month === z[1] && day >= z[2]) || (month === next[1] && day < next[2]);
+      })?.[0] || "Tidak Diketahui";
+    }
+
+    function processInput() {
+      const input = document.getElementById('inputValue').value.trim();
+      const result = document.getElementById('results');
+      result.innerHTML = '';
+
+      if (!input) return alert("Masukkan data terlebih dahulu.");
+
+      // === NIK Parser ===
+      if (/^\d{16}$/.test(input)) {
+        const nik = input;
+        const kodeProv = nik.substring(0, 2);
+        const kodeKab = nik.substring(0, 4);
+        const kodeKec = nik.substring(0, 6);
+        const tgl = parseInt(nik.substring(6, 8));
+        const bln = parseInt(nik.substring(8, 10));
+        const thn = parseInt(nik.substring(10, 12));
+        const unik = nik.substring(12);
+
+        let kelamin = "LAKI-LAKI";
+        let tanggalLahir = tgl;
+        if (tgl > 40) {
+          kelamin = "PEREMPUAN";
+          tanggalLahir = tgl - 40;
+        }
+
+        const tahunLengkap = thn <= 24 ? 2000 + thn : 1900 + thn;
+        const tglLahir = `${String(tanggalLahir).padStart(2, "0")}/${String(bln).padStart(2, "0")}/${tahunLengkap}`;
+
+        const provinsi = wilayah.provinsi[kodeProv] || "Tidak Diketahui";
+        const kabupaten = wilayah.kabkot[kodeKab] || "Tidak Diketahui";
+        const kecamatan = wilayah.kecamatan[kodeKec]?.split(' -- ')[0] || "Tidak Diketahui";
+
+        const today = new Date();
+        const birthDate = new Date(`${tahunLengkap}-${bln}-${tanggalLahir}`);
+        const umurTahun = today.getFullYear() - birthDate.getFullYear();
+        const umurBulan = today.getMonth() - birthDate.getMonth();
+        const umurHari = today.getDate() - birthDate.getDate();
+
+        const zodiak = getZodiak(tanggalLahir, bln);
+
+        result.innerHTML = `
+          <div class="card">
+            <h3>🆔 Analisa NIK</h3>
+            Provinsi: ${provinsi}<br>
+            Kabupaten: ${kabupaten}<br>
+            Kecamatan: ${kecamatan}<br>
+            Jenis Kelamin: ${kelamin}<br>
+            Tanggal Lahir: ${tglLahir}<br>
+            Zodiak: ${zodiak}<br>
+            Umur: ${umurTahun} tahun
+          </div>
+        `;
+        return;
+      }
+
+      result.innerHTML = `<div class="card">❌ Format tidak dikenali.</div>`;
+    }
+
+    loadWilayah();
+  </script>
+</body>
+</html>
