@@ -102,13 +102,6 @@
   </div>
 
   <div class="section">
-    <h2>💣 ShellFinder</h2>
-    <input type="text" id="shellTarget" placeholder="https://target.com">
-    <button onclick="runShellFinder()">Scan</button>
-    <div id="shellResult"></div>
-  </div>
-
-  <div class="section">
     <h2>🛡️ JavaScript Obfuscator</h2>
     <textarea id="jsInput" rows="6" placeholder="// Masukkan kode JavaScript kamu di sini"></textarea><br>
     <button onclick="obfuscateJS()">Obfuscate</button>
@@ -200,51 +193,6 @@
     } catch (e) {
       out.innerHTML = `<pre>❌ Gagal melacak: ${e.message}</pre>`;
     }
-  }
-
-  async function runShellFinder() {
-    const baseUrl = document.getElementById("shellTarget").value.trim().replace(/\/$/, "");
-    const output = document.getElementById("shellResult");
-
-    if (!baseUrl.startsWith("http")) {
-      output.innerHTML = "<pre>❌ Masukkan URL lengkap, contoh: https://example.com</pre>";
-      return;
-    }
-
-    output.innerHTML = "<pre>🧪 Memindai kemungkinan shell... Mohon tunggu...</pre>";
-
-    const shellPaths = [
-      'shell.php','shellGS.php','anon55552.php','trasersec.php','asx.php','test.php',
-      'gelaybp.php','IndoSec.php','minishel.php','asasx.php','cmd.php',
-      'wp-content/shell.php','wso.php','adminer.php','up.php','upload.php',
-      'priv8.php','r57.php','c99.php','1.php','2.php',
-      'phpinfo.php','backdoor.php','sh.php','shellputz.php','lol.php','akc.php'
-    ];
-
-    const foundShells = [];
-
-    for (const path of shellPaths) {
-      const url = `${baseUrl}/${path}`;
-      try {
-        const res = await fetch(url);
-        if (res.status === 200) {
-          foundShells.push(url);
-        }
-      } catch (e) {
-        // skip
-      }
-    }
-
-    const hasil = {
-      status: "sukses",
-      target: baseUrl,
-      jumlah_shell_ditemukan: foundShells.length,
-      shells: foundShells.length > 0 ? foundShells : "Tidak ditemukan file shell umum.",
-      catatan: foundShells.length > 0 
-        ? "Segera audit file di atas untuk memastikan tidak berbahaya." 
-        : "Tidak terdeteksi file shell umum, namun tidak menjamin 100% aman."
-    };
-    output.innerHTML = `<pre>${JSON.stringify(hasil, null, 2)}</pre>`;
   }
 
   function obfuscateJS() {
