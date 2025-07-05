@@ -137,50 +137,51 @@
       document.getElementById('error').textContent = "";
     }
 
-    async function trackNIK() {
-      const nik = document.getElementById("nikInput").value.trim();
-      const out = document.getElementById("nikResult");
+        async function nikInput() {
+      const nik = document.getElementById('nik').value.trim();
+      const out = document.getElementById('result');
 
       if (!/^\d{16}$/.test(nik)) {
-        out.innerHTML = "<pre>❌ NIK harus 16 digit!</pre>";
-        return;
+        return out.textContent = "⚠️ NIK harus terdiri dari 16 digit angka.";
       }
 
-      const provCode = nik.substring(0, 2);
-      const regCode = nik.substring(0, 4);
-      const dayRaw = parseInt(nik.substring(6, 8), 10);
-      const month = nik.substring(8, 10);
-      const year = nik.substring(10, 12);
+      const kodeProv = nik.substring(0, 2);
+      const kodeKab = nik.substring(0, 4);
+      const kodeKec = nik.substring(0, 6);
+      const tglLahir = nik.substring(6, 8);
+      const bln = nik.substring(8, 10);
+      const thn = nik.substring(10, 12);
 
-      const gender = dayRaw > 40 ? "Perempuan" : "Laki-laki";
-      const day = (dayRaw > 40 ? dayRaw - 40 : dayRaw).toString().padStart(2, "0");
-      const birth = `${day}-${month}-19${year}`;
+      const tanggal = parseInt(tglLahir) > 40 ? parseInt(tglLahir) - 40 : parseInt(tglLahir);
+      const gender = parseInt(tglLahir) > 40 ? "Perempuan" : "Laki-laki";
+      const lahir = `${tanggal.toString().padStart(2, '0')}-${bln}-${thn}`;
 
       try {
-        const provRes = await fetch(`https://wilayah.id/api/provinces.json`);
-        const provData = await provRes.json();
-        const prov = provData.data.find(p => p.code === provCode)?.name || "Tidak Diketahui";
+        const res = await fetch('wilayah.json'); // pastikan file ini tersedia
+        const data = await res.json();
 
-        const regRes = await fetch(`https://wilayah.id/api/regencies/${provCode}.json`);
-        const regData = await regRes.json();
-        const reg = regData.data.find(r => r.code.replace('.', '') === regCode)?.name || "Tidak Diketahui";
+        const provinsi = data[kodeProv]?.nama || "Tidak ditemukan";
+        const kabupaten = data[kodeProv]?.kabupaten?.[kodeKab]?.nama || "Tidak ditemukan";
+        const kecamatan = data[kodeProv]?.kabupaten?.[kodeKab]?.kecamatan?.[kodeKec] || "Tidak ditemukan";
 
         const result = {
           status: "sukses",
-          data: {
-            nik,
-            tanggal_lahir: birth,
-            jenis_kelamin: gender,
-            provinsi: prov,
-            kabupaten_kota: reg
+          nik,
+          jenis_kelamin: gender,
+          tanggal_lahir: lahir,
+          lokasi: {
+            provinsi,
+            kabupaten,
+            kecamatan
           }
         };
 
-        out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+        out.textContent = JSON.stringify(result, null, 2);
+
       } catch (e) {
-        out.innerHTML = `<pre>❌ Gagal mengambil data wilayah: ${e.message}</pre>`;
+        out.textContent = "❌ Gagal memuat wilayah.json: " + e.message;
       }
-    }
+        }
 
     function trackUsername() {
       const name = document.getElementById("usernameTrack").value.trim();
