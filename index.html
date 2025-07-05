@@ -105,6 +105,13 @@
         <input type="text" id="usernameTrack" placeholder="Contoh: Budi Santoso">
         <button onclick="trackUsername()">Cari</button>
         <div id="usernameResult"></div>
+       </div>
+      
+     <div class="section">
+       <h2>🆔 Lacak NIK</h2>
+       <input type="text" id="nikInput" placeholder="Contoh: 3201021012980001">
+       <button onclick="trackNIK()">Lacak</button>
+       <div id="nikResult"></div>
       </div>
     </div>
   </div>
@@ -132,17 +139,87 @@
       document.getElementById('error').textContent = "";
       document.getElementById("bgmusic").pause();
     }
-
     function trackNumber() {
-      alert("Tracking nomor dummy...");
+      const input = document.getElementById("number").value.trim();
+      const out = document.getElementById("numberResult");
+      const prefix = input.replace(/^0/, '62').slice(0, 5);
+      const provider = prefix.startsWith('6281') ? 'Telkomsel' : 'Tidak diketahui';
+      const result = {
+        status: "sukses",
+        nomor: input,
+        provider: provider
+      };
+      out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
     }
 
-    function trackIP() {
-      alert("Tracking IP dummy...");
+    async function trackIP() {
+      const ip = document.getElementById("ip").value.trim();
+      const out = document.getElementById("ipResult");
+      const apiKey = "20143bf1526545a3b45f8859da4000f3";
+      try {
+        const res = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
+        const data = await res.json();
+        out.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+      } catch (e) {
+        out.innerHTML = `<pre>❌ Error: ${e.message}</pre>`;
+      }
     }
 
     function trackUsername() {
-      alert("Tracking username dummy...");
+      const name = document.getElementById("usernameTrack").value.trim();
+      const out = document.getElementById("usernameResult");
+      const encoded = encodeURIComponent(name);
+      const result = {
+        nama: name,
+        facebook: `https://www.facebook.com/search/people/?q=${encoded}`,
+        linkedin: `https://www.linkedin.com/search/results/all/?keywords=${encoded}`,
+        instagram: `https://www.instagram.com/${name.split(" ")[0].toLowerCase()}/`,
+        google: `https://www.google.com/search?q=${encoded}`
+      };
+      out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+    }
+
+    async function trackNIK() {
+  const nik = document.getElementById("nikInput").value.trim();
+  const out = document.getElementById("nikResult");
+
+  if (!/^\d{16}$/.test(nik)) {
+    out.innerHTML = "<pre>❌ NIK harus 16 digit!</pre>";
+    return;
+  }
+
+  const provCode = nik.substring(0, 2);
+  const regCode = nik.substring(0, 4);
+  const dayRaw = parseInt(nik.substring(6, 8), 10);
+  const month = nik.substring(8, 10);
+  const year = nik.substring(10, 12);
+
+  const gender = dayRaw > 40 ? "Perempuan" : "Laki-laki";
+  const day = (dayRaw > 40 ? dayRaw - 40 : dayRaw).toString().padStart(2, "0");
+  const birth = `${day}-${month}-19${year}`;
+
+  // Lookup provinsi
+  const provRes = await fetch(`https://wilayah.id/api/provinces.json`);
+  const provData = await provRes.json();
+  const prov = provData.data.find(p => p.code === provCode)?.name || "Tidak Diketahui";
+
+  // Lookup kabupaten/kota
+  const regRes = await fetch(`https://wilayah.id/api/regencies/${provCode}.json`);
+  const regData = await regRes.json();
+  const reg = regData.data.find(r => r.code.replace('.', '') === regCode)?.name || "Tidak Diketahui";
+
+  const result = {
+    status: "sukses",
+    data: {
+      nik,
+      tanggal_lahir: birth,
+      jenis_kelamin: gender,
+      provinsi: prov,
+      kabupaten_kota: reg
+    }
+  };
+
+  out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
     }
   </script>
 </body>
