@@ -16,8 +16,6 @@
       padding: 40px;
       max-width: 800px;
       margin: auto;
-      background: rgba(0, 0, 0, 0.7);
-      border-radius: 10px;
     }
     input, button {
       padding: 10px 15px;
@@ -61,17 +59,11 @@
       color: red;
       margin-top: 10px;
     }
-    audio {
-      display: none;
-    }
   </style>
 </head>
 <body>
-
-  <!-- Musik latar -->
-  <audio id="bgmusic" autoplay loop>
-    <source src="https://c.top4top.io/m_3464eo4cl0.mp3" type="audio/mpeg">
-    Browser tidak mendukung audio.
+  <audio autoplay loop hidden>
+    <source src="https://c.top4top.io/m_3464eo4cl0.mp3" type="audio/mp3">
   </audio>
 
   <div class="container" id="login">
@@ -93,6 +85,13 @@
         <div id="numberResult"></div>
       </div>
 
+       <div class="section">
+        <h2>📱 Track Nomor HP</h2>
+        <input type="text" id="number" placeholder="081234567890">
+        <button onclick="trackNumber()">Lacak</button>
+        <div id="numberResult"></div>
+       </div>
+      
       <div class="section">
         <h2>🌍 Lacak IP Address</h2>
         <input type="text" id="ip" placeholder="Contoh: 8.8.8.8">
@@ -105,13 +104,13 @@
         <input type="text" id="usernameTrack" placeholder="Contoh: Budi Santoso">
         <button onclick="trackUsername()">Cari</button>
         <div id="usernameResult"></div>
-       </div>
-      
-     <div class="section">
-       <h2>🆔 Lacak NIK</h2>
-       <input type="text" id="nikInput" placeholder="Contoh: 3201021012980001">
-       <button onclick="trackNIK()">Lacak</button>
-       <div id="nikResult"></div>
+      </div>
+
+      <div class="section">
+        <h2>🆔 Lacak NIK</h2>
+        <input type="text" id="nikInput" placeholder="Contoh: 3201021012980001">
+        <button onclick="trackNIK()">Lacak</button>
+        <div id="nikResult"></div>
       </div>
     </div>
   </div>
@@ -125,7 +124,6 @@
       if (user === "haxsec" && pass === "haxsec") {
         document.getElementById("login").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
-        document.getElementById("bgmusic").play();
       } else {
         error.textContent = "❌ Username atau password salah!";
       }
@@ -137,89 +135,208 @@
       document.getElementById('username').value = "";
       document.getElementById('password').value = "";
       document.getElementById('error').textContent = "";
-      document.getElementById("bgmusic").pause();
-    }
-    function trackNumber() {
-      const input = document.getElementById("number").value.trim();
-      const out = document.getElementById("numberResult");
-      const prefix = input.replace(/^0/, '62').slice(0, 5);
-      const provider = prefix.startsWith('6281') ? 'Telkomsel' : 'Tidak diketahui';
-      const result = {
-        status: "sukses",
-        nomor: input,
-        provider: provider
-      };
-      out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
     }
 
-    async function trackIP() {
-      const ip = document.getElementById("ip").value.trim();
-      const out = document.getElementById("ipResult");
-      const apiKey = "20143bf1526545a3b45f8859da4000f3";
+    async function trackNIK() {
+      const nik = document.getElementById("nikInput").value.trim();
+      const out = document.getElementById("nikResult");
+
+      if (!/^\d{16}$/.test(nik)) {
+        out.innerHTML = "<pre>❌ NIK harus 16 digit!</pre>";
+        return;
+      }
+
+      const provCode = nik.substring(0, 2);
+      const regCode = nik.substring(0, 4);
+      const dayRaw = parseInt(nik.substring(6, 8), 10);
+      const month = nik.substring(8, 10);
+      const year = nik.substring(10, 12);
+
+      const gender = dayRaw > 40 ? "Perempuan" : "Laki-laki";
+      const day = (dayRaw > 40 ? dayRaw - 40 : dayRaw).toString().padStart(2, "0");
+      const birth = `${day}-${month}-19${year}`;
+
       try {
-        const res = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
-        const data = await res.json();
-        out.innerHTML = `<pre>${JSON.stringify(data, null, 2)}</pre>`;
+        const provRes = await fetch(`https://wilayah.id/api/provinces.json`);
+        const provData = await provRes.json();
+        const prov = provData.data.find(p => p.code === provCode)?.name || "Tidak Diketahui";
+
+        const regRes = await fetch(`https://wilayah.id/api/regencies/${provCode}.json`);
+        const regData = await regRes.json();
+        const reg = regData.data.find(r => r.code.replace('.', '') === regCode)?.name || "Tidak Diketahui";
+
+        const result = {
+          status: "sukses",
+          data: {
+            nik,
+            tanggal_lahir: birth,
+            jenis_kelamin: gender,
+            provinsi: prov,
+            kabupaten_kota: reg
+          }
+        };
+
+        out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
       } catch (e) {
-        out.innerHTML = `<pre>❌ Error: ${e.message}</pre>`;
+        out.innerHTML = `<pre>❌ Gagal mengambil data wilayah: ${e.message}</pre>`;
       }
     }
 
     function trackUsername() {
       const name = document.getElementById("usernameTrack").value.trim();
       const out = document.getElementById("usernameResult");
+
+      if (!name) return out.innerHTML = "<pre>⚠️ Masukkan nama atau username</pre>";
+
+      const first = name.split(" ")[0].toLowerCase();
       const encoded = encodeURIComponent(name);
+
       const result = {
-        nama: name,
-        facebook: `https://www.facebook.com/search/people/?q=${encoded}`,
-        linkedin: `https://www.linkedin.com/search/results/all/?keywords=${encoded}`,
-        instagram: `https://www.instagram.com/${name.split(" ")[0].toLowerCase()}/`,
-        google: `https://www.google.com/search?q=${encoded}`
+        status: "sukses",
+        pesan: "Pencarian berhasil",
+        data: {
+          nama: name,
+          sosial_media: {
+            facebook: `https://www.facebook.com/search/people/?q=${encoded}`,
+            linkedin: `https://www.linkedin.com/search/results/all/?keywords=${encoded}`,
+            instagram: `https://www.instagram.com/${first}/`,
+            google: `https://www.google.com/search?q=${encoded}`,
+            youtube: `https://www.youtube.com/@${encoded}`
+          }
+        },
+        author: "RendiSec - VynGrup"
       };
+
       out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
     }
 
-    async function trackNIK() {
-  const nik = document.getElementById("nikInput").value.trim();
-  const out = document.getElementById("nikResult");
+        function trackNumber() {
+      const input = document.getElementById("number").value.trim();
+      const resultDiv = document.getElementById("result");
 
-  if (!/^\d{16}$/.test(nik)) {
-    out.innerHTML = "<pre>❌ NIK harus 16 digit!</pre>";
-    return;
-  }
+      if (!/^(\+62|62|0)8[1-9][0-9]{7,10}$/.test(input)) {
+        resultDiv.innerHTML = "<pre>[🔎] Masukkan format nomor yang benar (cth: 081234567890)</pre>";
+        return;
+      }
 
-  const provCode = nik.substring(0, 2);
-  const regCode = nik.substring(0, 4);
-  const dayRaw = parseInt(nik.substring(6, 8), 10);
-  const month = nik.substring(8, 10);
-  const year = nik.substring(10, 12);
+      const number = input.replace(/[^0-9]/g, '').replace(/^0/, '62');
+      const prefix = number.slice(0, 5);
 
-  const gender = dayRaw > 40 ? "Perempuan" : "Laki-laki";
-  const day = (dayRaw > 40 ? dayRaw - 40 : dayRaw).toString().padStart(2, "0");
-  const birth = `${day}-${month}-19${year}`;
+      const providerMap = {
+        "62811": { provider: "Telkomsel (Kartu Halo)", region: "Nasional" },
+        "62812": { provider: "Telkomsel (simPATI)", region: "Jabodetabek" },
+        "62813": { provider: "Telkomsel (simPATI)", region: "Jawa Timur" },
+        "62821": { provider: "Telkomsel (Kartu AS)", region: "Jawa Tengah" },
+        "62822": { provider: "Telkomsel (Kartu AS)", region: "Bali & Nusa Tenggara" },
+        "62823": { provider: "Telkomsel (Loop)", region: "Sumatera" },
+        "62814": { provider: "Indosat (IM3)", region: "Jabodetabek" },
+        "62815": { provider: "Indosat (Mentari)", region: "Jawa Barat" },
+        "62816": { provider: "Indosat (Matrix)", region: "Nasional" },
+        "62855": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Tengah" },
+        "62856": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Timur" },
+        "62857": { provider: "Indosat (IM3 Ooredoo)", region: "Kalimantan" },
+        "62858": { provider: "Indosat (IM3 Ooredoo)", region: "Sulawesi" },
+        "62817": { provider: "XL Axiata", region: "Jabodetabek" },
+        "62818": { provider: "XL Axiata", region: "Jawa Tengah & Timur" },
+        "62819": { provider: "XL Axiata", region: "Sumatera & Kalimantan" },
+        "62859": { provider: "XL Prabayar", region: "Nasional" },
+        "62877": { provider: "XL Prabayar", region: "Jawa Barat" },
+        "62878": { provider: "XL Prabayar", region: "Bali, NTB, NTT" },
+        "62895": { provider: "Tri (3)", region: "Jakarta" },
+        "62896": { provider: "Tri (3)", region: "Jawa Tengah" },
+        "62897": { provider: "Tri (3)", region: "Jawa Timur" },
+        "62898": { provider: "Tri (3)", region: "Sumatera" },
+        "62899": { provider: "Tri (3)", region: "Sulawesi" },
+        "62881": { provider: "Smartfren", region: "Jabodetabek" },
+        "62882": { provider: "Smartfren", region: "Jawa Barat" },
+        "62883": { provider: "Smartfren", region: "Jawa Tengah" },
+        "62884": { provider: "Smartfren", region: "Nasional" },
+        "62831": { provider: "Axis", region: "Jabodetabek" },
+        "62832": { provider: "Axis", region: "Jawa Tengah" },
+        "62833": { provider: "Axis", region: "Jawa Timur" },
+        "62838": { provider: "Axis", region: "Sumatera" },
+        "62851": { provider: "By.U (Telkomsel Digital)", region: "Online / Nasional" }
+      };
 
-  // Lookup provinsi
-  const provRes = await fetch(`https://wilayah.id/api/provinces.json`);
-  const provData = await provRes.json();
-  const prov = provData.data.find(p => p.code === provCode)?.name || "Tidak Diketahui";
+      const nikMap = {
+        "Jabodetabek": "3276051005910001",
+        "Jakarta": "3173040001000100",
+        "Jawa Barat": "3201021012980001",
+        "Jawa Tengah": "3302041001121001",
+        "Jawa Timur": "3572031211900001",
+        "Sumatera": "1211011212870001",
+        "Bali & Nusa Tenggara": "5204021502870002",
+        "Kalimantan": "6220020202800002",
+        "Sulawesi": "7501012005070025",
+        "Nasional": "3502041211870001",
+        "Online / Nasional": "3502041299870201",
+        "Tidak tersedia": "-"
+      };
 
-  // Lookup kabupaten/kota
-  const regRes = await fetch(`https://wilayah.id/api/regencies/${provCode}.json`);
-  const regData = await regRes.json();
-  const reg = regData.data.find(r => r.code.replace('.', '') === regCode)?.name || "Tidak Diketahui";
+      const info = providerMap[prefix] || {
+        provider: "Tidak diketahui / prefix tidak umum",
+        region: "Tidak tersedia"
+      };
 
-  const result = {
-    status: "sukses",
-    data: {
-      nik,
-      tanggal_lahir: birth,
-      jenis_kelamin: gender,
-      provinsi: prov,
-      kabupaten_kota: reg
-    }
-  };
+      const tipe = /halo|matrix/i.test(info.provider) ? 'Pascabayar' : 'Prabayar';
 
-  out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+      const hasil = {
+        status: "sukses",
+        pesan: "Analisa nomor berhasil",
+        data: {
+          nomor: '+' + number,
+          operator: info.provider,
+          prefix,
+          negara: "Indonesia",
+          tipe,
+          wilayah_registrasi: info.region,
+          nik_registrasi: nikMap[info.region] || "-",
+          valid_format: true,
+          kemungkinan: info.provider.includes("Tidak diketahui") ? "⚠️ Nomor tidak umum atau virtual" : "✅ Nomor umum & valid"
+        }
+      };
+
+      resultDiv.innerHTML = `<pre>${JSON.stringify(hasil, null, 2)}</pre>`;
+        }
+    
+    async function trackIP() {
+      const ip = document.getElementById("ip").value.trim();
+      const out = document.getElementById("ipResult");
+      const apiKey = "20143bf1526545a3b45f8859da4000f3";
+
+      if (!ip) return out.innerHTML = "<pre>⚠️ Masukkan IP terlebih dahulu</pre>";
+      out.innerHTML = "<pre>🔍 Melacak IP...</pre>";
+
+      try {
+        const res = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
+        const data = await res.json();
+
+        if (!data.ip) return out.innerHTML = "<pre>❌ IP tidak ditemukan</pre>";
+
+        const result = {
+          status: "sukses",
+          pesan: "Data IP ditemukan",
+          data: {
+            ip: data.ip,
+            negara: data.country_name || "Tidak Diketahui",
+            provinsi: data.state_prov || "Tidak Diketahui",
+            kota: data.city || "Tidak Diketahui",
+            kode_pos: data.zipcode || "Tidak Diketahui",
+            isp: data.isp || "Tidak Diketahui",
+            koordinat: {
+              lat: data.latitude,
+              lon: data.longitude
+            },
+            zona_waktu: data.time_zone?.name || "Tidak Diketahui",
+            maps: `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
+          },
+          author: "RendiSec - VynGrup"
+        };
+
+        out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+      } catch (e) {
+        out.innerHTML = `<pre>❌ Gagal melacak: ${e.message}</pre>`;
+      }
     }
   </script>
 </body>
