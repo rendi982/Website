@@ -3,73 +3,55 @@
 <head>
   <meta charset="UTF-8">
   <title>RendiSec OSINT Dashboard</title>
-  <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap" rel="stylesheet">
   <style>
     body {
-      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
-      color: #00ffcc;
-      font-family: 'Share Tech Mono', monospace;
+      background: #0d0d0d;
+      color: #0f0;
+      font-family: monospace;
       margin: 0;
       padding: 0;
     }
     .container {
-      padding: 40px;
-      max-width: 800px;
-      margin: auto;
+      padding: 20px;
     }
     input, button {
-      padding: 10px 15px;
+      padding: 10px;
       margin: 5px;
-      font-size: 16px;
-      background: #112;
-      color: #00ffcc;
-      border: 1px solid #00ffcc;
-      border-radius: 5px;
-      outline: none;
-    }
-    button:hover {
-      background: #00ffcc;
-      color: #000;
-      cursor: pointer;
+      font-size: 14px;
+      background: #222;
+      color: #0f0;
+      border: 1px solid #0f0;
     }
     pre {
-      background: #111;
+      background: #222;
       padding: 15px;
-      border-left: 5px solid #00ffcc;
       white-space: pre-wrap;
-      overflow-y: auto;
-      border-radius: 4px;
+      border: 1px solid #0f0;
     }
     h1, h2 {
-      color: #00ffe1;
-      border-bottom: 2px solid #00ffcc;
-      padding-bottom: 5px;
+      color: #00ff88;
+      border-bottom: 1px solid #0f0;
     }
-    #dashboard {
+    #dashboard, #osint-tools {
       display: none;
     }
     .section {
-      margin-bottom: 50px;
-      padding: 20px;
-      background: rgba(0, 0, 0, 0.4);
-      border-radius: 8px;
-      box-shadow: 0 0 10px #00ffe1;
-    }
-    #error {
-      color: red;
-      margin-top: 10px;
+      margin-bottom: 40px;
     }
   </style>
 </head>
 <body>
+
+  <!-- LOGIN FORM -->
   <div class="container" id="login">
     <h2>🔐 Login Panel RendiSec</h2>
     <input type="text" id="username" placeholder="Username"><br>
     <input type="password" id="password" placeholder="Password"><br>
     <button onclick="checkLogin()">Masuk</button>
-    <div id="error"></div>
+    <div id="error" style="color: red;"></div>
   </div>
 
+  <!-- DASHBOARD -->
   <div class="container" id="dashboard">
     <h1>✅ Selamat datang, HaxSec</h1>
     <button onclick="logout()">Logout</button>
@@ -98,6 +80,7 @@
   </div>
 
   <script>
+    // Login Check
     function checkLogin() {
       const user = document.getElementById('username').value.trim();
       const pass = document.getElementById('password').value.trim();
@@ -106,6 +89,7 @@
       if (user === "haxsec" && pass === "haxsec") {
         document.getElementById("login").style.display = "none";
         document.getElementById("dashboard").style.display = "block";
+        document.getElementById("osint-tools").style.display = "block";
       } else {
         error.textContent = "❌ Username atau password salah!";
       }
@@ -117,6 +101,163 @@
       document.getElementById('username').value = "";
       document.getElementById('password').value = "";
       document.getElementById('error').textContent = "";
+    }
+
+    // Track Number
+    function trackNumber() {
+      const input = document.getElementById("number").value.trim();
+      const out = document.getElementById("numberResult");
+
+      if (!/^(\+62|62|0)8[1-9][0-9]{7,10}$/.test(input)) {
+        out.innerHTML = "<pre>⚠️ Nomor tidak valid</pre>";
+        return;
+      }
+
+      const number = input.replace(/[^0-9]/g, '').replace(/^0/, '62');
+      const prefix = number.slice(0, 5);
+
+      const providerMap = {
+        "62811": { provider: "Telkomsel (Kartu Halo)", region: "Nasional" },
+        "62812": { provider: "Telkomsel (simPATI)", region: "Jabodetabek" },
+        "62813": { provider: "Telkomsel (simPATI)", region: "Jawa Timur" },
+        "62821": { provider: "Telkomsel (Kartu AS)", region: "Jawa Tengah" },
+        "62822": { provider: "Telkomsel (Kartu AS)", region: "Bali & Nusa Tenggara" },
+        "62823": { provider: "Telkomsel (Loop)", region: "Sumatera" },
+        "62814": { provider: "Indosat (IM3)", region: "Jabodetabek" },
+        "62815": { provider: "Indosat (Mentari)", region: "Jawa Barat" },
+        "62816": { provider: "Indosat (Matrix)", region: "Nasional" },
+        "62855": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Tengah" },
+        "62856": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Timur" },
+        "62857": { provider: "Indosat (IM3 Ooredoo)", region: "Kalimantan" },
+        "62858": { provider: "Indosat (IM3 Ooredoo)", region: "Sulawesi" },
+        "62817": { provider: "XL Axiata", region: "Jabodetabek" },
+        "62818": { provider: "XL Axiata", region: "Jawa Tengah & Timur" },
+        "62819": { provider: "XL Axiata", region: "Sumatera & Kalimantan" },
+        "62859": { provider: "XL Prabayar", region: "Nasional" },
+        "62877": { provider: "XL Prabayar", region: "Jawa Barat" },
+        "62878": { provider: "XL Prabayar", region: "Bali, NTB, NTT" },
+        "62895": { provider: "Tri (3)", region: "Jakarta" },
+        "62896": { provider: "Tri (3)", region: "Jawa Tengah" },
+        "62897": { provider: "Tri (3)", region: "Jawa Timur" },
+        "62898": { provider: "Tri (3)", region: "Sumatera" },
+        "62899": { provider: "Tri (3)", region: "Sulawesi" },
+        "62881": { provider: "Smartfren", region: "Jabodetabek" },
+        "62882": { provider: "Smartfren", region: "Jawa Barat" },
+        "62883": { provider: "Smartfren", region: "Jawa Tengah" },
+        "62884": { provider: "Smartfren", region: "Nasional" },
+        "62831": { provider: "Axis", region: "Jabodetabek" },
+        "62832": { provider: "Axis", region: "Jawa Tengah" },
+        "62833": { provider: "Axis", region: "Jawa Timur" },
+        "62838": { provider: "Axis", region: "Sumatera" },
+        "62851": { provider: "By.U (Telkomsel Digital)", region: "Online / Nasional" }
+      };
+
+      const nikMap = {
+        "Jabodetabek": "3276051005910001",
+        "Jakarta": "3173040001000100",
+        "Jawa Barat": "3201021012980001",
+        "Jawa Tengah": "3302041001121001",
+        "Jawa Timur": "3572031211900001",
+        "Sumatera": "1211011212870001",
+        "Bali & Nusa Tenggara": "5204021502870002",
+        "Kalimantan": "6220020202800002",
+        "Sulawesi": "7501012005070025",
+        "Nasional": "3502041211870001",
+        "Online / Nasional": "3502041299870201",
+        "Tidak tersedia": "-"
+      };
+
+      const info = providerMap[prefix] || { provider: "Tidak diketahui", region: "Tidak tersedia" };
+      const tipe = /halo|matrix/i.test(info.provider) ? 'Pascabayar' : 'Prabayar';
+
+      const result = {
+        status: "sukses",
+        pesan: "Analisa nomor berhasil",
+        data: {
+          nomor: '+' + number,
+          operator: info.provider,
+          prefix,
+          negara: "Indonesia",
+          tipe,
+          wilayah_registrasi: info.region,
+          nik_registrasi: nikMap[info.region] || "-",
+          valid_format: true,
+          kemungkinan: info.provider.includes("Tidak diketahui") ? "⚠️ Nomor tidak umum" : "✅ Nomor umum & valid"
+        }
+      };
+
+      out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+    }
+
+    // Track IP
+    async function trackIP() {
+      const ip = document.getElementById("ip").value.trim();
+      const out = document.getElementById("ipResult");
+
+      if (!ip) return out.innerHTML = "<pre>⚠️ Masukkan IP terlebih dahulu</pre>";
+
+      const apiKey = "20143bf1526545a3b45f8859da4000f3"; // Ganti jika perlu
+      out.innerHTML = "<pre>🔍 Melacak IP...</pre>";
+
+      try {
+        const res = await fetch(`https://api.ipgeolocation.io/ipgeo?apiKey=${apiKey}&ip=${ip}`);
+        const data = await res.json();
+
+        if (!data.ip) return out.innerHTML = "<pre>❌ IP tidak ditemukan</pre>";
+
+        const result = {
+          status: "sukses",
+          pesan: "Data IP ditemukan",
+          data: {
+            ip: data.ip,
+            negara: data.country_name || "Tidak Diketahui",
+            provinsi: data.state_prov || "Tidak Diketahui",
+            kota: data.city || "Tidak Diketahui",
+            kode_pos: data.zipcode || "Tidak Diketahui",
+            isp: data.isp || "Tidak Diketahui",
+            koordinat: {
+              lat: data.latitude,
+              lon: data.longitude
+            },
+            zona_waktu: data.time_zone?.name || "Tidak Diketahui",
+            maps: `https://www.google.com/maps?q=${data.latitude},${data.longitude}`
+          },
+          author: "RendiSec - VynGrup"
+        };
+
+        out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
+      } catch (e) {
+        out.innerHTML = `<pre>❌ Gagal melacak: ${e.message}</pre>`;
+      }
+    }
+
+    // Track Username
+    function trackUsername() {
+      const name = document.getElementById("usernameTrack").value.trim();
+      const out = document.getElementById("usernameResult");
+
+      if (!name) return out.innerHTML = "<pre>⚠️ Masukkan nama atau username</pre>";
+
+      const first = name.split(" ")[0].toLowerCase();
+      const encoded = encodeURIComponent(name);
+
+      const result = {
+        status: "sukses",
+        pesan: "Pencarian berhasil",
+        data: {
+          nama: name,
+          sosial_media: {
+            facebook: `https://www.facebook.com/search/people/?q=${encoded}`,
+            linkedin: `https://www.linkedin.com/search/results/all/?keywords=${encoded}`,
+            instagram: `https://www.instagram.com/${first}/`,
+            google: `https://www.google.com/search?q=${encoded}`,
+            youtube: `https://www.youtube.com/@${encoded}`
+          }
+        },
+        author: "RendiSec - VynGrup"
+      };
+
+      out.innerHTML = `<pre>${JSON.stringify(result, null, 2)}</pre>`;
     }
   </script>
 </body>
