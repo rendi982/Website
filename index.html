@@ -17,15 +17,16 @@
       max-width: 800px;
       margin: auto;
     }
-    input, button {
+    input, button, textarea {
       padding: 10px 15px;
-      margin: 5px;
+      margin: 5px 0;
       font-size: 16px;
       background: #112;
       color: #00ffcc;
       border: 1px solid #00ffcc;
       border-radius: 5px;
       outline: none;
+      width: 100%;
     }
     button:hover {
       background: #00ffcc;
@@ -60,6 +61,7 @@
       margin-top: 10px;
     }
   </style>
+  <script src="https://cdn.jsdelivr.net/npm/javascript-obfuscator@4.0.0/dist/index.browser.js"></script>
 </head>
 <body>
 <audio autoplay loop hidden>
@@ -104,6 +106,14 @@
     <input type="text" id="shellTarget" placeholder="https://target.com">
     <button onclick="runShellFinder()">Scan</button>
     <div id="shellResult"></div>
+  </div>
+
+  <div class="section">
+    <h2>🛡️ JavaScript Obfuscator</h2>
+    <textarea id="jsInput" rows="6" placeholder="// Masukkan kode JavaScript kamu di sini"></textarea><br>
+    <button onclick="obfuscateJS()">Obfuscate</button>
+    <button onclick="copyObfuscated()">Copy</button>
+    <pre id="jsOutput">⚙️ Hasil obfuscate akan muncul di sini...</pre>
   </div>
 </div>
 
@@ -237,10 +247,116 @@
     output.innerHTML = `<pre>${JSON.stringify(hasil, null, 2)}</pre>`;
   }
 
-  function trackNumber() {
-    // Fungsi sebelumnya tetap kamu pakai di sini
-    // Karena terlalu panjang, saya bisa sisipkan ulang jika diminta
+  function obfuscateJS() {
+    const code = document.getElementById("jsInput").value;
+    if (!code.trim()) {
+      document.getElementById("jsOutput").textContent = "⚠️ Masukkan kode JavaScript terlebih dahulu.";
+      return;
+    }
+
+    const obfuscated = JavaScriptObfuscator.obfuscate(code, {
+      compact: true,
+      controlFlowFlattening: true
+    });
+
+    document.getElementById("jsOutput").textContent = obfuscated.getObfuscatedCode();
   }
+
+  function copyObfuscated() {
+    const output = document.getElementById("jsOutput").textContent;
+    navigator.clipboard.writeText(output).then(() => {
+      alert("✅ Hasil obfuscate disalin!");
+    });
+  }
+
+          function trackNumber() {
+      const input = document.getElementById("number").value.trim();
+      const resultDiv = document.getElementById("result");
+
+      if (!/^(\+62|62|0)8[1-9][0-9]{7,10}$/.test(input)) {
+        resultDiv.innerHTML = "<pre>[🔎] Masukkan format nomor yang benar (cth: 081234567890)</pre>";
+        return;
+      }
+
+      const number = input.replace(/[^0-9]/g, '').replace(/^0/, '62');
+      const prefix = number.slice(0, 5);
+
+      const providerMap = {
+        "62811": { provider: "Telkomsel (Kartu Halo)", region: "Nasional" },
+        "62812": { provider: "Telkomsel (simPATI)", region: "Jabodetabek" },
+        "62813": { provider: "Telkomsel (simPATI)", region: "Jawa Timur" },
+        "62821": { provider: "Telkomsel (Kartu AS)", region: "Jawa Tengah" },
+        "62822": { provider: "Telkomsel (Kartu AS)", region: "Bali & Nusa Tenggara" },
+        "62823": { provider: "Telkomsel (Loop)", region: "Sumatera" },
+        "62814": { provider: "Indosat (IM3)", region: "Jabodetabek" },
+        "62815": { provider: "Indosat (Mentari)", region: "Jawa Barat" },
+        "62816": { provider: "Indosat (Matrix)", region: "Nasional" },
+        "62855": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Tengah" },
+        "62856": { provider: "Indosat (IM3 Ooredoo)", region: "Jawa Timur" },
+        "62857": { provider: "Indosat (IM3 Ooredoo)", region: "Kalimantan" },
+        "62858": { provider: "Indosat (IM3 Ooredoo)", region: "Sulawesi" },
+        "62817": { provider: "XL Axiata", region: "Jabodetabek" },
+        "62818": { provider: "XL Axiata", region: "Jawa Tengah & Timur" },
+        "62819": { provider: "XL Axiata", region: "Sumatera & Kalimantan" },
+        "62859": { provider: "XL Prabayar", region: "Nasional" },
+        "62877": { provider: "XL Prabayar", region: "Jawa Barat" },
+        "62878": { provider: "XL Prabayar", region: "Bali, NTB, NTT" },
+        "62895": { provider: "Tri (3)", region: "Jakarta" },
+        "62896": { provider: "Tri (3)", region: "Jawa Tengah" },
+        "62897": { provider: "Tri (3)", region: "Jawa Timur" },
+        "62898": { provider: "Tri (3)", region: "Sumatera" },
+        "62899": { provider: "Tri (3)", region: "Sulawesi" },
+        "62881": { provider: "Smartfren", region: "Jabodetabek" },
+        "62882": { provider: "Smartfren", region: "Jawa Barat" },
+        "62883": { provider: "Smartfren", region: "Jawa Tengah" },
+        "62884": { provider: "Smartfren", region: "Nasional" },
+        "62831": { provider: "Axis", region: "Jabodetabek" },
+        "62832": { provider: "Axis", region: "Jawa Tengah" },
+        "62833": { provider: "Axis", region: "Jawa Timur" },
+        "62838": { provider: "Axis", region: "Sumatera" },
+        "62851": { provider: "By.U (Telkomsel Digital)", region: "Online / Nasional" }
+      };
+
+      const nikMap = {
+        "Jabodetabek": "3276051005910001",
+        "Jakarta": "3173040001000100",
+        "Jawa Barat": "3201021012980001",
+        "Jawa Tengah": "3302041001121001",
+        "Jawa Timur": "3572031211900001",
+        "Sumatera": "1211011212870001",
+        "Bali & Nusa Tenggara": "5204021502870002",
+        "Kalimantan": "6220020202800002",
+        "Sulawesi": "7501012005070025",
+        "Nasional": "3502041211870001",
+        "Online / Nasional": "3502041299870201",
+        "Tidak tersedia": "-"
+      };
+
+      const info = providerMap[prefix] || {
+        provider: "Tidak diketahui / prefix tidak umum",
+        region: "Tidak tersedia"
+      };
+
+      const tipe = /halo|matrix/i.test(info.provider) ? 'Pascabayar' : 'Prabayar';
+
+      const hasil = {
+        status: "sukses",
+        pesan: "Analisa nomor berhasil",
+        data: {
+          nomor: '+' + number,
+          operator: info.provider,
+          prefix,
+          negara: "Indonesia",
+          tipe,
+          wilayah_registrasi: info.region,
+          nik_registrasi: nikMap[info.region] || "-",
+          valid_format: true,
+          kemungkinan: info.provider.includes("Tidak diketahui") ? "⚠️ Nomor tidak umum atau virtual" : "✅ Nomor umum & valid"
+        }
+      };
+
+      resultDiv.innerHTML = `<pre>${JSON.stringify(hasil, null, 2)}</pre>`;
+          }
 </script>
 </body>
 </html>
